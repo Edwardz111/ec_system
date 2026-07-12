@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单确认</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .order-item {
+            border-bottom: 1px solid #e5e5e5;
+            padding: 15px 0;
+        }
+        .order-item img {
+            max-width: 100px;
+            height: auto;
+        }
+        .address-card {
+            border: 2px solid #e5e5e5;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .address-card.active {
+            border-color: #0d6efd;
+            background-color: #e7f3ff;
+        }
+        .address-card .default-tag {
+            font-size: 12px;
+            color: #0d6efd;
+            margin-left: 8px;
+        }
+        .address-empty {
+            padding: 24px;
+            text-align: center;
+            background: #fff8e6;
+            border: 1px dashed #ffc107;
+            border-radius: 8px;
+        }
+        .payment-method {
+            border: 2px solid #e5e5e5;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .payment-method.active {
+            border-color: #0d6efd;
+            background-color: #e7f3ff;
+        }
+        .payment-icon {
+            font-size: 24px;
+        }
+        .total-section {
+            border-top: 2px solid #333;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            border: none;
+            padding: 12px 40px;
+        }
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #ee5a5a, #dd4a4a);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-5">
+        <div class="container">
+            <a class="navbar-brand" href="/product/list">电商平台</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/product/list">商品列表</a>
+                <a class="nav-link" href="/order/cart?userId=1">购物车</a>
+                <a class="nav-link" href="/order/list?userId=1">我的订单</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h2 class="mb-4">📋 订单确认</h2>
+        
+        <form action="/order/submit" method="post" onsubmit="return confirmSubmit()">
+            <!-- 收货地址 -->
+            <div class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">📍 收货地址</h4>
+                    <a th:href="${addressManageUrl}" class="btn btn-sm btn-outline-primary">+ 新增 / 管理地址</a>
+                </div>
+
+                <div th:if="${addressList == null || addressList.isEmpty()}" class="address-empty mb-3">
+                    <p class="mb-2 text-muted">您还没有收货地址，请先添加</p>
+                    <a th:href="${addressManageUrl}" class="btn btn-warning btn-sm">去添加收货地址</a>
+                </div>
+
+                <div th:unless="${addressList == null || addressList.isEmpty()}">
+                    <div th:each="addr : ${addressList}"
+                         class="address-card"
+                         th:classappend="${addr.id == selectedAddressId} ? ' active' : ''"
+                         th:attr="data-address-id=${addr.id}"
+                         onclick="selectAddressCard(this)">
+                        <div class="form-check">
+                            <input class="form-check-input address-radio" type="radio" name="addressId"
+                                   th:id="'addr-' + ${addr.id}"
+                                   th:value="${addr.id}"
+                                   th:checked="${addr.id == selectedAddressId}">
+                            <label class="form-check-label" th:for="'addr-' + ${addr.id}" style="cursor:pointer;">
+                                <strong th:text="${addr.receiver}">收货人</strong>
+                                <span th:text="${addr.phone}" class="ms-2"></span>
+                                <span th:if="${addr.isDefault != null && addr.isDefault == 1}" class="default-tag">[默认]</span>
+                                <br>
+                                <span class="text-muted"
+                                      th:text="${addr.province + addr.city + addr.district + addr.detail}"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商品信息 -->
+            <div class="mb-5">
+                <h4 class="mb-3">🛒 商品信息</h4>
+                <div th:if="${cartList == null || cartList.isEmpty()}" class="text-center py-5">
+                    <p class="text-muted">购物车为空，无法提交订单</p>
+                    <a href="/product/list" class="btn btn-primary">去购物</a>
+                </div>
+                
+                <div th:unless="${cartList == null || cartList.isEmpty()}">
+                    <div class="order-item d-flex align-items-center" th:each="item : ${cartList}">
+                        <div class="col-md-2">
+                            <img th:src="@{'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=product%20photo%20thumbnail&image_size=square'}" alt="商品图片" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-4">
+                            <h5 th:text="${item.productName != null ? item.productName : '商品名称'}"></h5>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="text-danger font-bold">¥<span th:text="${item.price != null ? item.price : '0.00'}"></span></span>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="badge bg-secondary">x<span th:text="${item.quantity}">1</span></span>
+                        </div>
+                        <div class="col-md-2 text-right">
+                            <span class="text-danger font-bold">¥<span th:text="${item.price != null && item.quantity != null ? #numbers.formatDecimal(item.price * item.quantity, 1, 2) : '0.00'}"></span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 支付方式 -->
+            <div class="mb-5">
+                <h4 class="mb-3">💳 支付方式</h4>
+                <div class="payment-method active" onclick="selectPayment('alipay', event)">
+                    <span class="payment-icon">🔷</span>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="alipay" value="alipay" checked>
+                        <label class="form-check-label" for="alipay"><strong>支付宝</strong></label>
+                    </div>
+                </div>
+                <div class="payment-method" onclick="selectPayment('wechat', event)">
+                    <span class="payment-icon">💚</span>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="wechat" value="wechat">
+                        <label class="form-check-label" for="wechat"><strong>微信支付</strong></label>
+                    </div>
+                </div>
+                <div class="payment-method" onclick="selectPayment('card', event)">
+                    <span class="payment-icon">💳</span>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="card" value="card">
+                        <label class="form-check-label" for="card"><strong>银行卡支付</strong></label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 订单备注 -->
+            <div class="mb-5">
+                <h4 class="mb-3">📝 订单备注</h4>
+                <textarea class="form-control" name="remark" rows="3" placeholder="请输入订单备注（选填）"></textarea>
+            </div>
+            
+            <!-- 订单金额 -->
+            <div th:unless="${cartList == null || cartList.isEmpty()}" class="total-section bg-light p-4 rounded">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">商品金额</span>
+                    <span>¥<span th:text="${totalAmount != null ? totalAmount : '0.00'}"></span></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">运费</span>
+                    <span class="text-success">免运费</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">优惠</span>
+                    <span class="text-success">-¥0.00</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <span class="h5">实付金额</span>
+                    <span class="h4 text-danger font-bold">¥<span th:text="${totalAmount != null ? totalAmount : '0.00'}"></span></span>
+                </div>
+            </div>
+            
+            <!-- 提交按钮 -->
+            <div th:unless="${cartList == null || cartList.isEmpty()}" class="mt-4 text-right">
+                <a th:href="@{/order/cart(userId=${userId})}" class="btn btn-outline-secondary me-3">返回购物车</a>
+                <button type="submit" class="btn btn-primary btn-lg submit-btn"
+                        th:disabled="${addressList == null || addressList.isEmpty()}">提交订单</button>
+            </div>
+            
+            <!-- 隐藏字段 -->
+            <input type="hidden" name="userId" th:value="${userId}">
+            <input type="hidden" name="selectedItems" id="selectedItems" th:value="${defaultSelectedItems}">
+        </form>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载时优先使用 URL 中的选中项，否则使用服务端生成的 defaultSelectedItems
+        window.onload = function() {
+            const field = document.getElementById('selectedItems');
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromUrl = urlParams.get('selectedItems');
+            if (fromUrl) {
+                field.value = fromUrl;
+            }
+        };
+        
+        function selectAddressCard(cardEl) {
+            document.querySelectorAll('.address-card').forEach(function(card) {
+                card.classList.remove('active');
+            });
+            cardEl.classList.add('active');
+            const radio = cardEl.querySelector('.address-radio');
+            if (radio) {
+                radio.checked = true;
+            }
+        }
+
+        document.querySelectorAll('.address-radio').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                const card = this.closest('.address-card');
+                if (card) {
+                    selectAddressCard(card);
+                }
+            });
+        });
+
+        // 选择支付方式
+        function selectPayment(method, event) {
+            document.querySelectorAll('.payment-method').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            document.querySelector('input[name="paymentMethod"]:checked').checked = false;
+            document.getElementById(method).checked = true;
+        }
+        
+        // 确认提交
+        function confirmSubmit() {
+            if (!confirm('确认提交订单吗？')) {
+                return false;
+            }
+            
+            // 确保选中的商品ID已填充
+            const selectedItemsField = document.getElementById('selectedItems');
+            if (!selectedItemsField.value || !selectedItemsField.value.trim()) {
+                alert('没有可结算的商品，请返回购物车重新选择');
+                return false;
+            }
+            const addressChecked = document.querySelector('input[name="addressId"]:checked');
+            if (!addressChecked) {
+                alert('请选择收货地址');
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

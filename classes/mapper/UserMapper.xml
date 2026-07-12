@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  用户模块 Mapper XML
+  表名：users（统一数据库 ec_system）
+  注意：application.yml 已开启 map-underscore-to-camel-case=true
+        所以 created_at → createdAt 自动映射，无需手动 resultMap
+-->
+<mapper namespace="com.ec.mapper.UserMapper">
+
+    <!-- ── 用户模块（王梓骏）需要的查询 ── -->
+
+    <insert id="insert" parameterType="com.ec.pojo.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `users`(username, password, email, phone, role, is_vip, status, wechat_openid)
+        VALUES(#{username}, #{password}, #{email}, #{phone},
+        #{role, jdbcType=VARCHAR}, #{isVip}, #{status}, #{wechatOpenid, jdbcType=VARCHAR})
+    </insert>
+
+    <select id="selectById" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE id = #{id}
+    </select>
+
+    <select id="selectByUsername" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE username = #{username} LIMIT 1
+    </select>
+
+    <select id="selectByEmail" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE email = #{email} LIMIT 1
+    </select>
+
+    <select id="selectByWechatOpenid" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE wechat_openid = #{openid} LIMIT 1
+    </select>
+
+    <select id="selectAll" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM `users`
+    </select>
+
+    <update id="updateInfo" parameterType="com.ec.pojo.User">
+        UPDATE `users`
+        SET username=#{username}, email=#{email}, phone=#{phone},
+        age=#{age}, gender=#{gender}, updated_at=NOW()
+        WHERE id=#{id}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE `users` SET password=#{password}, updated_at=NOW() WHERE id=#{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `users` SET status=#{status}, updated_at=NOW() WHERE id=#{id}
+    </update>
+
+    <update id="bindWechat">
+        UPDATE `users` SET wechat_openid=#{openid}, updated_at=NOW() WHERE id=#{id}
+    </update>
+
+    <update id="updateVipLevel">
+        UPDATE `users` SET is_vip=#{isVip}, updated_at=NOW() WHERE id=#{id}
+    </update>
+
+    <!-- ── ec模块（王柏程/购物车订单）需要的查询 ── -->
+
+    <!-- findById：ec模块 UserService.getUserById 调用 -->
+    <select id="findById" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE id = #{id}
+    </select>
+
+    <!-- findAll：ec模块 UserService.getAllUsers 调用 -->
+    <select id="findAll" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` ORDER BY id
+    </select>
+
+    <!-- findByUsername：ec模块登录调用 -->
+    <select id="findByUsername" resultType="com.ec.pojo.User">
+        SELECT * FROM `users` WHERE username = #{username} LIMIT 1
+    </select>
+
+</mapper>

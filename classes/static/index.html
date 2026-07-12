@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>电商平台 - 商品浏览</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #ff5000 !important;
+        }
+        .search-bar {
+            max-width: 600px;
+        }
+        .category-panel {
+            background-color: #fff;
+            border-radius: 6px;
+            padding: 12px;
+        }
+        /* 大分类、细分分类的外层容器，使用换行布局 */
+        #rootCategories,
+        #childCategories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 10px; /* 行距、列距 */
+        }
+        .category-chip {
+            cursor: pointer;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            font-size: 14px;
+            background-color: #f7f7f7;
+            white-space: nowrap;
+        }
+        .category-chip.active {
+            border-color: #ff5000;
+            color: #ff5000;
+            background-color: #fff7f2;
+        }
+        .product-card {
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background-color: #fff;
+            transition: transform .15s ease, box-shadow .15s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .product-image-placeholder {
+            width: 100%;
+            padding-top: 75%;
+            background: linear-gradient(135deg, #ffe0cc, #ffd1e3);
+        }
+        .product-body {
+            padding: 10px 12px 12px;
+        }
+        .product-name {
+            font-size: 14px;
+            height: 40px;
+            overflow: hidden;
+        }
+        .product-price {
+            color: #ff5000;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .product-meta {
+            font-size: 12px;
+            color: #999;
+        }
+        .btn-add-cart {
+            font-size: 12px;
+            padding: 4px 10px;
+            margin-top: 6px;
+            background: #ff5000;
+            border-color: #ff5000;
+            color: #fff;
+        }
+        .btn-add-cart:hover { background: #e64800; border-color: #e64800; color: #fff; }
+        .filter-panel {
+            background-color: #fff;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .sort-btn {
+            margin-right: 6px;
+        }
+        .sort-btn.active {
+            background-color: #ff5000;
+            border-color: #ff5000;
+        }
+        .recommend-section {
+            background-color: #fff;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">校园电商</a>
+        <div class="flex-grow-1 d-flex justify-content-center">
+            <form id="searchForm" class="d-flex search-bar">
+                <input class="form-control me-2" type="search" id="keywordInput" placeholder="搜索商品，如：iPhone、连衣裙" />
+                <button class="btn btn-warning" type="submit">搜索</button>
+            </form>
+        </div>
+        <div id="navUserArea" class="d-flex align-items-center"></div>
+    </div>
+</nav>
+
+<div class="container mb-4">
+    <div class="row">
+        <!-- 左侧分类 -->
+        <div class="col-lg-3 mb-3">
+            <div class="category-panel mb-3">
+                <h6 class="mb-2">商品分类</h6>
+                <div id="rootCategories" class="mb-2"></div>
+                <div id="childCategories"></div>
+            </div>
+            <div class="category-panel">
+                <h6 class="mb-2">价格区间</h6>
+                <div class="d-flex align-items-center mb-2">
+                    <input type="number" class="form-control form-control-sm me-1" id="minPriceInput" placeholder="最低价" />
+                    <span class="mx-1">-</span>
+                    <input type="number" class="form-control form-control-sm ms-1" id="maxPriceInput" placeholder="最高价" />
+                </div>
+                <button id="btnApplyPrice" class="btn btn-sm btn-outline-secondary w-100">应用价格筛选</button>
+            </div>
+        </div>
+
+        <!-- 右侧商品列表 -->
+        <div class="col-lg-9">
+            <div class="filter-panel d-flex flex-wrap align-items-center justify-content-between">
+                <div class="mb-2 mb-sm-0">
+                    <button class="btn btn-sm btn-outline-secondary sort-btn" data-sort="newest">新品优先</button>
+                    <button class="btn btn-sm btn-outline-secondary sort-btn" data-sort="priceAsc">价格从低到高</button>
+                    <button class="btn btn-sm btn-outline-secondary sort-btn" data-sort="priceDesc">价格从高到低</button>
+                    <button class="btn btn-sm btn-outline-secondary sort-btn" data-sort="salesDesc">销量优先</button>
+                </div>
+                <div class="text-muted small" id="resultInfo">加载中...</div>
+            </div>
+
+            <div id="productList" class="row g-3 mt-1"></div>
+        </div>
+    </div>
+
+    <!-- 推荐商品 -->
+    <div class="recommend-section">
+        <h6 class="mb-3">为你推荐</h6>
+        <div id="recommendList" class="row g-3"></div>
+    </div>
+</div>
+
+<script src="/js/cart.js"></script>
+<script>
+    let selectedRootCategoryId = null;
+    let selectedLeafCategoryId = null;
+    let currentSort = 'newest';
+    let currentPage = 0;
+    const pageSize = 20;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        CartUtil.initNavbar(document.getElementById('navUserArea'));
+        loadRootCategories();
+        loadRecommendations(null);
+        searchProducts();
+        initEventListeners();
+    });
+
+    function initEventListeners() {
+        document.getElementById('searchForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            currentPage = 0;
+            searchProducts();
+        });
+
+        document.getElementById('btnApplyPrice').addEventListener('click', function () {
+            currentPage = 0;
+            searchProducts();
+        });
+
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active', 'btn-warning'));
+                this.classList.add('active', 'btn-warning');
+                currentSort = this.getAttribute('data-sort');
+                currentPage = 0;
+                searchProducts();
+            });
+        });
+    }
+
+    function loadRootCategories() {
+        fetch('/api/categories/roots')
+            .then(r => r.json())
+            .then(list => {
+                const container = document.getElementById('rootCategories');
+                container.innerHTML = '';
+                list.forEach(cat => {
+                    const span = document.createElement('span');
+                    span.className = 'category-chip';
+                    span.textContent = cat.name;
+                    span.dataset.id = cat.categoryId;
+                    span.addEventListener('click', () => onRootCategoryClick(cat.categoryId, span));
+                    container.appendChild(span);
+                });
+            })
+            .catch(err => console.error('加载根分类失败', err));
+    }
+
+    function onRootCategoryClick(categoryId, element) {
+        selectedRootCategoryId = categoryId;
+        selectedLeafCategoryId = null;
+
+        document.querySelectorAll('#rootCategories .category-chip').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        loadChildCategories(categoryId);
+        loadRecommendations(null); // 还没到叶子分类，只刷新为“随机推荐”
+        currentPage = 0;
+        searchProducts();
+    }
+
+    function loadChildCategories(parentId) {
+        fetch('/api/categories/children?parentId=' + parentId)
+            .then(r => r.json())
+            .then(list => {
+                const container = document.getElementById('childCategories');
+                container.innerHTML = '';
+
+                if (!list || list.length === 0) {
+                    const small = document.createElement('small');
+                    small.className = 'text-muted';
+                    small.textContent = '当前为最终分类';
+                    container.appendChild(small);
+                    // 把 parentId 作为叶子分类
+                    selectedLeafCategoryId = parentId;
+                    loadRecommendations(selectedLeafCategoryId);
+                    currentPage = 0;
+                    searchProducts();
+                    return;
+                }
+
+                const title = document.createElement('div');
+                title.className = 'w-100 mb-1 small text-muted';
+                title.textContent = '细分分类：';
+                container.appendChild(title);
+
+                list.forEach(cat => {
+                    const span = document.createElement('span');
+                    span.className = 'category-chip';
+                    span.textContent = cat.name;
+                    span.dataset.id = cat.categoryId;
+                    span.addEventListener('click', () => onChildCategoryClick(cat.categoryId, span));
+                    container.appendChild(span);
+                });
+            })
+            .catch(err => console.error('加载子分类失败', err));
+    }
+
+    function onChildCategoryClick(categoryId, element) {
+        // 点击子分类后，再查是否还有子分类；如果没有，则视为叶子分类
+        document.querySelectorAll('#childCategories .category-chip').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        fetch('/api/categories/children?parentId=' + categoryId)
+            .then(r => r.json())
+            .then(list => {
+                if (!list || list.length === 0) {
+                    selectedLeafCategoryId = categoryId;
+                    loadRecommendations(selectedLeafCategoryId);
+                    currentPage = 0;
+                    searchProducts();
+                } else {
+                    // 继续向下一级展示
+                    const container = document.getElementById('childCategories');
+                    container.innerHTML = '';
+                    const title = document.createElement('div');
+                    title.className = 'mb-1 small text-muted';
+                    title.textContent = '细分分类：';
+                    container.appendChild(title);
+                    list.forEach(cat => {
+                        const span = document.createElement('span');
+                        span.className = 'category-chip';
+                        span.textContent = cat.name;
+                        span.dataset.id = cat.categoryId;
+                        span.addEventListener('click', () => onChildCategoryClick(cat.categoryId, span));
+                        container.appendChild(span);
+                    });
+                }
+            })
+            .catch(err => console.error('检查子分类失败', err));
+    }
+
+    function searchProducts() {
+        const keyword = document.getElementById('keywordInput').value.trim();
+        const minPriceVal = document.getElementById('minPriceInput').value;
+        const maxPriceVal = document.getElementById('maxPriceInput').value;
+
+        const params = new URLSearchParams();
+        if (keyword) params.append('keyword', keyword);
+        if (selectedLeafCategoryId) params.append('categoryId', selectedLeafCategoryId);
+        if (minPriceVal) params.append('minPrice', minPriceVal);
+        if (maxPriceVal) params.append('maxPrice', maxPriceVal);
+        params.append('sortBy', currentSort);
+        params.append('page', currentPage);
+        params.append('size', pageSize);
+
+        fetch('/api/products/search?' + params.toString())
+            .then(r => r.json())
+            .then(page => {
+                renderProductList(page);
+            })
+            .catch(err => {
+                console.error('加载商品失败', err);
+            });
+    }
+
+    function renderProductList(page) {
+        const container = document.getElementById('productList');
+        container.innerHTML = '';
+
+        const content = page.content || [];
+        document.getElementById('resultInfo').textContent = `共 ${page.totalElements || 0} 件商品，当前第 ${page.number + 1} / ${page.totalPages || 1} 页`;
+
+        content.forEach(p => {
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-4 col-lg-3';
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-add-cart')) return;
+                window.location.href = `/product-detail.html?id=${p.id}`;
+            });
+
+            const img = document.createElement('div');
+            img.className = 'product-image-placeholder';
+
+            const body = document.createElement('div');
+            body.className = 'product-body';
+
+            const name = document.createElement('div');
+            name.className = 'product-name';
+            name.textContent = p.name;
+
+            const price = document.createElement('div');
+            price.className = 'product-price';
+            price.textContent = '￥' + Number(p.price).toFixed(2);
+
+            const meta = document.createElement('div');
+            meta.className = 'product-meta';
+            const sales = p.salesVolume != null ? p.salesVolume : 0;
+            meta.textContent = `销量 ${sales}  | 库存 ${p.stock}`;
+
+            const btnCart = document.createElement('button');
+            btnCart.type = 'button';
+            btnCart.className = 'btn btn-sm btn-add-cart w-100';
+            btnCart.textContent = '加入购物车';
+            btnCart.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const ok = await CartUtil.addToCart(p, 1);
+                if (ok) CartUtil.showToast('已加入购物车', true);
+            });
+
+            body.appendChild(name);
+            body.appendChild(price);
+            body.appendChild(meta);
+            body.appendChild(btnCart);
+
+            card.appendChild(img);
+            card.appendChild(body);
+            col.appendChild(card);
+            container.appendChild(col);
+        });
+    }
+
+    function loadRecommendations(categoryId) {
+        const params = new URLSearchParams();
+        params.append('limit', 12);
+        if (categoryId) params.append('categoryId', categoryId);
+
+        fetch('/api/products/recommend?' + params.toString())
+            .then(r => r.json())
+            .then(list => renderRecommendList(list))
+            .catch(err => console.error('加载推荐商品失败', err));
+    }
+
+    function renderRecommendList(list) {
+        const container = document.getElementById('recommendList');
+        container.innerHTML = '';
+
+        (list || []).forEach(p => {
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-3 col-lg-2';
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-add-cart')) return;
+                window.location.href = `/product-detail.html?id=${p.id}`;
+            });
+
+            const img = document.createElement('div');
+            img.className = 'product-image-placeholder';
+
+            const body = document.createElement('div');
+            body.className = 'product-body';
+
+            const name = document.createElement('div');
+            name.className = 'product-name';
+            name.textContent = p.name;
+
+            const price = document.createElement('div');
+            price.className = 'product-price';
+            price.textContent = '￥' + Number(p.price).toFixed(2);
+
+            const btnCart = document.createElement('button');
+            btnCart.type = 'button';
+            btnCart.className = 'btn btn-sm btn-add-cart w-100';
+            btnCart.textContent = '加购';
+            btnCart.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const ok = await CartUtil.addToCart(p, 1);
+                if (ok) CartUtil.showToast('已加入购物车', true);
+            });
+
+            body.appendChild(name);
+            body.appendChild(price);
+            body.appendChild(btnCart);
+
+            card.appendChild(img);
+            card.appendChild(body);
+            col.appendChild(card);
+            container.appendChild(col);
+        });
+    }
+</script>
+</body>
+</html>

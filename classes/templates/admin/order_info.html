@@ -1,0 +1,352 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>订单详情</title>
+
+    <style>
+
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            display: flex;
+            height: 100vh;
+            background-color: #f4f6f9;
+        }
+
+        /* 左侧导航栏 */
+
+        .sidebar{
+            width: 20%;
+            background-color: rgba(3, 68, 248, 0.83);
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2{
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .sidebar ul{
+            list-style: none;
+        }
+
+        .sidebar li{
+            background-color: #3498db;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 18px;
+        }
+
+        .sidebar li:hover{
+            background-color: #3770d2;
+        }
+
+        /* 主体区域 */
+
+        .main{
+            width: 80%;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        /* 页面标题 */
+
+        .header{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .header h1{
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p{
+            color: gray;
+        }
+
+        /* 订单基础信息 */
+
+        .info-box{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .info-box h2{
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .info-grid{
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 20px;
+        }
+
+        .info-item{
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .info-item span{
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        /* 商品列表 */
+
+        .table-box{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .table-box h2{
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        table{
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th,
+        table td{
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th{
+            background-color: #f1f2f6;
+            color: #2c3e50;
+        }
+
+        /* 状态颜色 */
+
+        .paid{
+            color: green;
+            font-weight: bold;
+        }
+
+        .shipping{
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        /* 总金额区域 */
+
+        .total-box{
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .total-box h3{
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .total-price{
+            color: #e74c3c;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        /* 按钮区域 */
+
+        .btn-group{
+            margin-top: 25px;
+            text-align: right;
+        }
+
+        .btn-group button{
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: 0.3s;
+        }
+
+        .back-btn{
+            background-color: #95a5a6;
+        }
+
+        .ship-btn{
+            background-color: #2ecc71;
+        }
+
+        .print-btn{
+            background-color: #3498db;
+        }
+
+        .btn-group button:hover{
+            opacity: 0.9;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<!-- 左侧导航栏 -->
+
+<div class="sidebar">
+
+    <h2>后台管理</h2>
+
+    <ul>
+        <li><a href="/admin/dashboard" style="color:white;text-decoration:none;">首页</a></li>
+        <li><a href="/admin/users" style="color:white;text-decoration:none;">用户管理</a></li>
+        <li><a href="/admin/products" style="color:white;text-decoration:none;">商品管理</a></li>
+        <li><a href="/admin/orders" style="color:white;text-decoration:none;">订单管理</a></li>
+        <li><a href="/admin/reviews" style="color:white;text-decoration:none;">评价管理</a></li>
+    </ul>
+
+</div>
+
+<!-- 主体区域 -->
+
+<div class="main">
+
+    <!-- 页面标题 -->
+
+    <div class="header">
+
+        <h1>订单详情</h1>
+
+        <p>管理员可查看订单中的商品信息与订单状态</p>
+
+    </div>
+
+    <!-- 订单基础信息 -->
+
+    <div class="info-box">
+
+        <h2>订单基础信息</h2>
+
+        <div class="info-grid">
+
+            <div class="info-item">
+                <span>订单ID：</span><span th:text="${order.id}"></span>
+            </div>
+
+            <div class="info-item">
+                <span>用户ID：</span><span th:text="${order.userId}"></span>
+            </div>
+
+            <div class="info-item">
+                <span>订单状态：</span>
+                <span th:text="${order.status == '1' ? '待付款' : (order.status == '2' ? '待发货' : order.status)}"></span>
+            </div>
+
+            <div class="info-item">
+                <span>运输状态：</span><span th:text="${order.shippingStatus != null ? order.shippingStatus : '-'}"></span>
+            </div>
+
+            <div class="info-item">
+                <span>付款方式：</span><span th:text="${order.paymentMethod != null ? order.paymentMethod : '-'}"></span>
+            </div>
+
+            <div class="info-item">
+                <span>创建时间：</span>
+                <span th:text="${order.createdAt != null ? order.createdAt : '-'}"></span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 商品列表 -->
+
+    <div class="table-box">
+
+        <h2>订单商品信息</h2>
+
+        <table>
+
+            <thead>
+
+            <tr>
+                <th>明细ID</th>
+                <th>商品ID</th>
+                <th>商品名称</th>
+                <th>购买数量</th>
+                <th>商品单价</th>
+                <th>小计金额</th>
+                <th>创建时间</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+            <tr th:if="${orderItems == null or #lists.isEmpty(orderItems)}">
+                <td colspan="7" style="text-align:center;color:#999;">暂无订单明细（订单表有记录但 order_items 中无对应商品行，请检查数据）</td>
+            </tr>
+            <tr th:each="item : ${orderItems}" th:if="${orderItems != null and !orderItems.isEmpty()}">
+                <td th:text="${item.id}"></td>
+                <td th:text="${item.productId}"></td>
+                <td th:text="${item.productName != null ? item.productName : '-'}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td th:text="${item.price != null ? '￥' + item.price : '-'}"></td>
+                <td th:text="${item.price != null and item.quantity != null ? '￥' + item.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())) : '-'}"></td>
+                <td>-</td>
+            </tr>
+            </tbody>
+
+        </table>
+
+        <!-- 总金额 -->
+
+        <div class="total-box">
+
+            <h3>订单总金额</h3>
+
+            <div class="total-price" th:text="${order.totalAmount != null ? '￥' + order.totalAmount : '￥0'}">
+                ￥0
+            </div>
+
+        </div>
+
+        <!-- 操作按钮 -->
+
+        <div class="btn-group">
+
+            <button class="back-btn">返回订单列表</button>
+
+            <button class="ship-btn">确认发货</button>
+
+            <button class="print-btn">打印订单</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

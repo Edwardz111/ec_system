@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理</title>
+
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            display: flex;
+            background-color: #f4f6f9;
+            height: 100vh;
+        }
+
+        /* 左侧导航栏 */
+        .sidebar{
+            width: 20%;
+            background-color: rgba(3, 68, 248, 0.83);
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2{
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .sidebar ul{
+            list-style: none;
+        }
+
+        .sidebar li{
+            background-color: #3498db;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .sidebar li:hover{
+            background-color: #3770d2;
+        }
+
+        /* 右侧主体区域 */
+        .main{
+            width: 80%;
+            padding: 25px;
+        }
+
+        /* 页面标题 */
+        .header{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1{
+            margin-bottom: 10px;
+            color: #2f3542;
+        }
+
+        .header p{
+            color: gray;
+        }
+
+        /* 搜索区域 */
+        .search-box{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .search-box input,
+        .search-box select{
+            padding: 10px;
+            margin-right: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .search-box button{
+            padding: 10px 20px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-box button:hover{
+            background-color: #3770d2;
+        }
+
+        /* 表格区域 */
+        .table-box{
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        table{
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th,
+        table td{
+            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+        }
+
+        table th{
+            background-color: #f1f2f6;
+            color: #2f3542;
+        }
+
+        /* 状态标签 */
+        .status-normal{
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-ban{
+            color: red;
+            font-weight: bold;
+        }
+
+        .vip{
+            color: orange;
+            font-weight: bold;
+        }
+
+        /* 操作按钮 */
+        .action-btn{
+            padding: 6px 12px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .edit-btn{
+            background-color: #1e90ff;
+        }
+
+        .ban-btn{
+            background-color: #ff4757;
+        }
+
+        .vip-btn{
+            background-color: #ffa502;
+        }
+
+        /* 分页 */
+        .pagination{
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .pagination button{
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            background-color: #2f3542;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:hover{
+            background-color: #57606f;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<!-- 只修改左侧导航栏部分，其他保持不变 -->
+<div class="sidebar">
+    <h2>后台管理</h2>
+    <ul>
+        <li><a href="/admin/dashboard">首页</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+        <li><a href="/admin/products">商品管理</a></li>
+        <li><a href="/admin/orders">订单管理</a></li>
+        <li><a href="/admin/reviews">评价管理</a></li>
+    </ul>
+</div>
+
+<!-- 右侧主体 -->
+<div class="main">
+
+    <!-- 页面标题 -->
+    <div class="header">
+        <h1>用户管理</h1>
+        <p>管理员可查看并管理平台用户信息</p>
+    </div>
+
+    <!-- 搜索区域 -->
+    <div class="search-box">
+
+        <form action="/admin/users" method="get">
+
+            <input type="text"
+                   name="username"
+                   placeholder="请输入用户名">
+
+        <input type="text" placeholder="请输入手机号">
+        <select name="status">
+            <option value="">全部状态</option>
+            <option value="ACTIVE">正常</option>
+            <option value="DISABLED">禁用</option>
+            <option value="BANNED">封禁</option>
+        </select>
+
+        <select name="vip">
+            <option value="">全部用户</option>
+            <option value="1">VIP用户</option>
+            <option value="0">普通用户</option>
+        </select>
+
+        <button type="submit">搜索</button>
+        </form>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="table-box">
+
+        <table>
+
+            <thead>
+            <tr>
+                <th>用户ID</th>
+                <th>用户名</th>
+                <th>Email</th>
+                <th>手机号</th>
+                <th>性别</th>
+                <th>VIP状态</th>
+                <th>用户状态</th>
+                <th>注册时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <tr th:each="user : ${userList}">
+
+                <td th:text="${user.id}"></td>
+
+                <td th:text="${user.username}"></td>
+
+                <td th:text="${user.email}"></td>
+
+                <td th:text="${user.phone}"></td>
+
+                <td th:text="${user.gender}"></td>
+
+                <td th:text="${user.isVip != null and user.isVip == 1 ? 'VIP' : '普通用户'}"></td>
+
+                <td>
+                    <span th:if="${user.status == 'ACTIVE'}" class="status-normal">正常</span>
+                    <span th:if="${user.status == 'BANNED'}" class="status-ban">封禁</span>
+                    <span th:if="${user.status != 'ACTIVE' and user.status != 'BANNED'}" class="status-ban" th:text="${user.status == 'DISABLED' ? '禁用' : user.status}">禁用</span>
+                </td>
+
+                <td th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+
+                <td>
+                    <a th:href="@{/admin/users/operate(id=${user.id})}" class="action-btn edit-btn" style="text-decoration:none;display:inline-block;">操作</a>
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+            <button>上一页</button>
+            <button>1</button>
+            <button>2</button>
+            <button>下一页</button>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
+

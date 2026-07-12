@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f0f2f5; }
+        .profile-card { max-width: 620px; margin: 40px auto; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        .section-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: #6c757d; margin-bottom: 1rem; }
+        .info-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { width: 90px; color: #6c757d; font-size: .9rem; flex-shrink: 0; }
+        .info-value { flex: 1; font-weight: 500; }
+        .badge-vip { background: linear-gradient(135deg,#f6c90e,#f09819); color: #fff; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-primary px-4">
+    <a class="navbar-brand fw-bold" href="/index">🛒 电商系统</a>
+    <div class="ms-auto">
+        <a class="btn btn-outline-light btn-sm" href="/index">← 返回首页</a>
+    </div>
+</nav>
+
+<div class="card profile-card p-4 p-md-5">
+    <h5 class="fw-bold mb-4">👤 个人信息</h5>
+
+    <!-- 基本信息 -->
+    <div class="section-title">基本资料</div>
+    <div id="basicInfo">
+        <div class="info-row"><span class="info-label">用户名</span><span class="info-value" id="iUsername">—</span></div>
+        <div class="info-row"><span class="info-label">邮箱</span><span class="info-value" id="iEmail">—</span></div>
+        <div class="info-row"><span class="info-label">手机号</span><span class="info-value" id="iPhone">—</span></div>
+        <div class="info-row"><span class="info-label">年龄</span><span class="info-value" id="iAge">—</span></div>
+        <div class="info-row"><span class="info-label">性别</span><span class="info-value" id="iGender">—</span></div>
+        <div class="info-row"><span class="info-label">账号状态</span><span class="info-value" id="iStatus">—</span></div>
+        <div class="info-row"><span class="info-label">VIP 等级</span><span class="info-value" id="iVip">—</span></div>
+        <div class="info-row"><span class="info-label">注册时间</span><span class="info-value" id="iCreated">—</span></div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- 编辑表单 -->
+    <div class="section-title">修改资料</div>
+    <form id="editForm" onsubmit="submitEdit(event)">
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-control" id="eUsername">
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label">手机号</label>
+                <input type="tel" class="form-control" id="ePhone" placeholder="11位手机号">
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label">年龄</label>
+                <input type="number" class="form-control" id="eAge" min="1" max="150">
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label">性别</label>
+                <select class="form-select" id="eGender">
+                    <option value="">不填写</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <div id="editMsg" class="mb-2" style="display:none"></div>
+                <button type="submit" class="btn btn-primary">保存修改</button>
+            </div>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <!-- 修改密码 -->
+    <div class="section-title">修改密码</div>
+    <form id="pwdForm" onsubmit="submitPwd(event)">
+        <div class="row g-3">
+            <div class="col-sm-4">
+                <label class="form-label">当前密码</label>
+                <input type="password" class="form-control" id="pOld">
+            </div>
+            <div class="col-sm-4">
+                <label class="form-label">新密码</label>
+                <input type="password" class="form-control" id="pNew">
+            </div>
+            <div class="col-sm-4">
+                <label class="form-label">确认新密码</label>
+                <input type="password" class="form-control" id="pConfirm">
+            </div>
+            <div class="col-12">
+                <div id="pwdMsg" class="mb-2" style="display:none"></div>
+                <button type="submit" class="btn btn-warning">修改密码</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentUser = null;
+
+    // ── 加载用户信息 ──────────────────────────────
+    (async function load() {
+        const res  = await fetch('/user/info');
+        const json = await res.json();
+        if (json.code !== 200) { location.href = '/user/login'; return; }
+        const u = json.data;
+        currentUser = u;
+
+        document.getElementById('iUsername').textContent = u.username || '—';
+        document.getElementById('iEmail').textContent    = u.email    || '未绑定';
+        document.getElementById('iPhone').textContent    = u.phone    || '未填写';
+        document.getElementById('iAge').textContent      = u.age      || '未填写';
+        document.getElementById('iGender').textContent   = u.gender   || '未填写';
+        document.getElementById('iStatus').innerHTML     = u.status === 1
+            ? '<span class="badge bg-success">正常</span>'
+            : '<span class="badge bg-danger">禁用</span>';
+        document.getElementById('iVip').innerHTML        = u.vipLevel > 0
+            ? `<span class="badge badge-vip">VIP ${u.vipLevel}</span>`
+            : '<span class="text-muted">普通用户</span>';
+        document.getElementById('iCreated').textContent  = u.createTime
+            ? u.createTime.replace('T', ' ').slice(0, 16) : '—';
+
+        // 填充编辑表单
+        document.getElementById('eUsername').value = u.username || '';
+        document.getElementById('ePhone').value    = u.phone    || '';
+        document.getElementById('eAge').value      = u.age      || '';
+        document.getElementById('eGender').value   = u.gender   || '';
+    })();
+
+    // ── 保存基本信息 ──────────────────────────────
+    async function submitEdit(e) {
+        e.preventDefault();
+        const body = {
+            username: document.getElementById('eUsername').value.trim(),
+            phone:    document.getElementById('ePhone').value.trim(),
+            age:      parseInt(document.getElementById('eAge').value) || null,
+            gender:   document.getElementById('eGender').value
+        };
+        const res  = await fetch('/user/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        const el   = document.getElementById('editMsg');
+        el.style.display = '';
+        if (json.code === 200) {
+            el.className = 'alert alert-success py-1';
+            el.textContent = '修改成功';
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            el.className = 'alert alert-danger py-1';
+            el.textContent = json.msg || '修改失败';
+        }
+    }
+
+    // ── 修改密码 ──────────────────────────────────
+    async function submitPwd(e) {
+        e.preventDefault();
+        const oldPwd  = document.getElementById('pOld').value;
+        const newPwd  = document.getElementById('pNew').value;
+        const confirm = document.getElementById('pConfirm').value;
+        const el = document.getElementById('pwdMsg');
+        el.style.display = '';
+
+        if (!oldPwd || !newPwd) {
+            el.className = 'alert alert-warning py-1';
+            el.textContent = '请填写当前密码和新密码';
+            return;
+        }
+        if (newPwd !== confirm) {
+            el.className = 'alert alert-warning py-1';
+            el.textContent = '两次输入的新密码不一致';
+            return;
+        }
+
+        const res  = await fetch(`/user/updatePwd?oldPwd=${encodeURIComponent(oldPwd)}&newPwd=${encodeURIComponent(newPwd)}`, {
+            method: 'PUT'
+        });
+        const json = await res.json();
+        if (json.code === 200) {
+            el.className = 'alert alert-success py-1';
+            el.textContent = '密码修改成功，请重新登录';
+            setTimeout(() => { fetch('/user/logout'); location.href = '/user/login'; }, 1500);
+        } else {
+            el.className = 'alert alert-danger py-1';
+            el.textContent = json.msg || '密码修改失败';
+        }
+    }
+</script>
+</body>
+</html>

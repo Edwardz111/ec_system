@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>首页 - 电商系统</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f0f2f5; }
+        .navbar-brand { font-weight: 700; font-size: 1.3rem; }
+        .welcome-card {
+            max-width: 860px; margin: 60px auto;
+            border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,.10);
+        }
+        .module-card {
+            border-radius: 10px; cursor: pointer; transition: transform .15s, box-shadow .15s;
+            border: none; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        }
+        .module-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.14); }
+        .module-icon { font-size: 2.4rem; }
+        #username-display { font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4">
+    <span class="navbar-brand">🛒 电商系统</span>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="text-white small">欢迎，<span id="username-display">加载中…</span></span>
+        <button class="btn btn-outline-light btn-sm" onclick="logout()">退出登录</button>
+    </div>
+</nav>
+
+<!-- 主内容 -->
+<div class="card welcome-card p-5">
+    <h3 class="fw-bold mb-1">你好，<span id="welcome-name">同学</span> 👋</h3>
+    <p class="text-muted mb-4">电子商务系统 · 用户管理模块已就绪</p>
+
+    <!-- 功能模块入口 -->
+    <div class="row g-3">
+        <div class="col-md-3 col-6">
+            <div class="card module-card p-3 text-center" onclick="location.href='/user/profile'">
+                <div class="module-icon">👤</div>
+                <div class="mt-2 fw-semibold">个人信息</div>
+                <div class="text-muted small">查看与修改</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card module-card p-3 text-center" onclick="location.href='/user/address'">
+                <div class="module-icon">📦</div>
+                <div class="mt-2 fw-semibold">收货地址</div>
+                <div class="text-muted small">管理地址</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card module-card p-3 text-center" onclick="location.href='/index.html'">
+                <div class="module-icon">🛍️</div>
+                <div class="mt-2 fw-semibold">商品浏览</div>
+                <div class="text-muted small">分类搜索·推荐</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card module-card p-3 text-center" onclick="location.href='/home/ec'">
+                <div class="module-icon">🧾</div>
+                <div class="mt-2 fw-semibold">购物车/订单</div>
+                <div class="text-muted small">ec 模块</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录状态信息 -->
+    <div class="mt-4 p-3 bg-light rounded">
+        <div class="row text-center">
+            <div class="col">
+                <div class="text-muted small">账号</div>
+                <div id="info-username" class="fw-semibold">—</div>
+            </div>
+            <div class="col">
+                <div class="text-muted small">邮箱</div>
+                <div id="info-email" class="fw-semibold">—</div>
+            </div>
+            <div class="col">
+                <div class="text-muted small">VIP 等级</div>
+                <div id="info-vip" class="fw-semibold">—</div>
+            </div>
+            <div class="col">
+                <div class="text-muted small">账号状态</div>
+                <div id="info-status" class="fw-semibold">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面加载时获取当前用户信息
+    (async function loadUserInfo() {
+        const res = await fetch('/user/info');
+        const data = await res.json();
+        if (data.code !== 200) {
+            // 未登录，跳回登录页
+            location.href = '/user/login';
+            return;
+        }
+        const u = data.data;
+        document.getElementById('username-display').textContent = u.username;
+        document.getElementById('welcome-name').textContent = u.username;
+        document.getElementById('info-username').textContent = u.username;
+        document.getElementById('info-email').textContent = u.email || '未绑定';
+        document.getElementById('info-vip').textContent = u.vipLevel === 0 ? '普通用户' : 'VIP ' + u.vipLevel;
+        document.getElementById('info-status').textContent = u.status === 1 ? '✅ 正常' : '🚫 禁用';
+    })();
+
+    async function logout() {
+        await fetch('/user/logout');
+        location.href = '/user/login';
+    }
+</script>
+</body>
+</html>

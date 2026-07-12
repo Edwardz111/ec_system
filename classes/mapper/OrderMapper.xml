@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ec.mapper.OrderMapper">
+    <insert id="insert" parameterType="com.ec.pojo.Order" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO orders (user_id, address_id, total_amount, status, payment_method, shipping_status, coupon_id, discount_amount, created_at, updated_at)
+        VALUES (#{userId}, #{addressId}, #{totalAmount}, #{status}, #{paymentMethod}, #{shippingStatus}, #{couponId}, #{discountAmount}, NOW(), NOW())
+    </insert>
+    
+    <update id="update" parameterType="com.ec.pojo.Order">
+        UPDATE orders
+        SET user_id = #{userId}, total_amount = #{totalAmount}, 
+            status = #{status}, payment_method = #{paymentMethod}, 
+            shipping_status = #{shippingStatus}, coupon_id = #{couponId},
+            discount_amount = #{discountAmount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <select id="findById" parameterType="java.lang.Long" resultType="com.ec.pojo.Order">
+        SELECT id, user_id as userId, address_id as addressId, total_amount as totalAmount,
+               status, payment_method as paymentMethod, shipping_status as shippingStatus,
+               coupon_id as couponId, discount_amount as discountAmount,
+               created_at as createdAt, updated_at as updatedAt
+        FROM orders WHERE id = #{id}
+    </select>
+    
+    <select id="findByUserId" parameterType="java.lang.Long" resultType="com.ec.pojo.Order">
+        SELECT id, user_id as userId, address_id as addressId, total_amount as totalAmount,
+               status, payment_method as paymentMethod, shipping_status as shippingStatus,
+               coupon_id as couponId, discount_amount as discountAmount,
+               created_at as createdAt, updated_at as updatedAt
+        FROM orders WHERE user_id = #{userId} ORDER BY created_at DESC
+    </select>
+    
+    <select id="findAll" resultType="com.ec.pojo.Order">
+        SELECT id, user_id as userId, address_id as addressId, total_amount as totalAmount,
+               status, payment_method as paymentMethod, shipping_status as shippingStatus,
+               coupon_id as couponId, discount_amount as discountAmount,
+               created_at as createdAt, updated_at as updatedAt
+        FROM orders ORDER BY created_at DESC
+    </select>
+    
+    <update id="updateStatus">
+        UPDATE orders SET status = #{status}, updated_at = NOW() WHERE id = #{id}
+    </update>
+
+    <select id="ordercounts" resultType="map">
+
+        SELECT
+            DATE_FORMAT(created_at,'%Y-%m') AS month,
+        COUNT(*) AS count
+        FROM orders
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 3 YEAR)
+        GROUP BY DATE_FORMAT(created_at,'%Y-%m')
+        ORDER BY month
+
+    </select>
+</mapper>
