@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员后台首页</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f6f9;
+        }
+
+        /* 左侧菜单 */
+        .sidebar {
+            width: 220px;
+            background-color: #0344f8d3;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar li {
+            padding: 12px;
+            margin: 8px 0;
+            background-color: #3498db;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .sidebar li:hover {
+            background-color: #3770d2;
+        }
+
+        /* 主体区域 */
+        .main {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .charts {
+            display: flex;
+            gap: 20px;
+        }
+
+        .chart-box {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .chart {
+            width: 100%;
+            height: 350px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>后台管理</h2>
+    <ul>
+        <li><a href="/admin/dashboard">首页</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+        <li><a href="/admin/products">商品管理</a></li>
+        <li><a href="/admin/orders">订单管理</a></li>
+        <li><a href="/admin/reviews">评价管理</a></li>
+    </ul>
+</div>
+
+<div class="main">
+    <div class="header">
+        管理员后台dashboard
+    </div>
+
+    <div class="charts">
+        <div class="chart-box">
+            <h3>评分分布统计</h3>
+            <div id="chart1" class="chart"></div>
+        </div>
+
+        <div class="chart-box">
+            <h3>近3年订单趋势</h3>
+            <div id="chart2" class="chart"></div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    var ratingData = /*[[${stats.ratingCounts}]]*/ [0,0,0,0,0];
+    var orderLabels = /*[[${stats.orderTrendLabels}]]*/ [];
+    var orderCounts =/* [[${stats.orderTrendCounts}]]*/ [];
+
+    var chart1 = echarts.init(document.getElementById('chart1'));
+    chart1.setOption({
+        xAxis: { data: ['1分','2分','3分','4分','5分'] },
+        yAxis: {},
+        series: [{ type: 'bar', data: ratingData }]
+    });
+
+    var chart2 = echarts.init(document.getElementById('chart2'));
+    chart2.setOption({
+        xAxis: { data: []},
+        yAxis: {},
+        series: [{ type: 'line', data: orderCounts }]
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用户操作</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { display: flex; background-color: #f4f6f9; min-height: 100vh; }
+        .sidebar {
+            width: 20%; background-color: rgba(3, 68, 248, 0.83); color: white; padding: 20px;
+        }
+        .sidebar h2 { text-align: center; margin-bottom: 40px; font-size: 28px; }
+        .sidebar ul { list-style: none; }
+        .sidebar li {
+            background-color: #3498db; margin-bottom: 15px; padding: 15px;
+            border-radius: 8px; text-align: center; font-size: 18px;
+        }
+        .sidebar a { color: white; text-decoration: none; display: block; }
+        .main { width: 80%; padding: 25px; }
+        .header, .info-box, .action-box {
+            background: white; padding: 20px; border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .header h1 { color: #2f3542; margin-bottom: 8px; }
+        .header p { color: gray; }
+        .info-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+        }
+        .info-item {
+            background: #f8f9fa; padding: 14px; border-radius: 8px;
+        }
+        .info-item label { display: block; color: #888; font-size: 13px; margin-bottom: 6px; }
+        .info-item span { font-weight: bold; color: #2f3542; }
+        .status-normal { color: green; }
+        .status-ban { color: red; }
+        .vip { color: orange; }
+        .msg {
+            padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+            background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+        }
+        .action-box h2 { margin-bottom: 16px; color: #2f3542; font-size: 18px; }
+        .action-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px;
+        }
+        .action-row p { color: #666; font-size: 14px; margin-top: 6px; }
+        .btn {
+            padding: 10px 22px; border: none; border-radius: 6px;
+            color: white; cursor: pointer; font-size: 14px;
+        }
+        .btn-vip { background-color: #ffa502; }
+        .btn-vip:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-ban { background-color: #ff4757; }
+        .btn-ban:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-admin-role { background-color: #3742fa; }
+        .btn-super-admin { background-color: #8e44ad; }
+        .btn-revoke-admin { background-color: #57606f; }
+        .role-tag {
+            display: inline-block; padding: 2px 10px; border-radius: 12px;
+            font-size: 12px; font-weight: normal; margin-left: 6px;
+        }
+        .role-super { background: #f3e5f5; color: #8e24aa; }
+        .role-admin { background: #e3f2fd; color: #1565c0; }
+        .role-user { background: #f1f2f6; color: #666; }
+        .btn-back {
+            background-color: #57606f; text-decoration: none;
+            display: inline-block; padding: 10px 20px; border-radius: 6px; color: white;
+        }
+        .footer-actions { margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>后台管理</h2>
+    <ul>
+        <li><a href="/admin/dashboard">首页</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+        <li><a href="/admin/products">商品管理</a></li>
+        <li><a href="/admin/orders">订单管理</a></li>
+        <li><a href="/admin/reviews">评价管理</a></li>
+    </ul>
+</div>
+
+<div class="main">
+    <div class="header">
+        <h1>用户操作</h1>
+        <p>对用户执行管理操作（取消 VIP、封禁账号等）</p>
+    </div>
+
+    <div th:if="${message}" class="msg" th:text="${message}"></div>
+
+    <div class="info-box">
+        <div class="info-grid">
+            <div class="info-item">
+                <label>用户 ID</label>
+                <span th:text="${user.id}"></span>
+            </div>
+            <div class="info-item">
+                <label>用户名</label>
+                <span th:text="${user.username}"></span>
+            </div>
+            <div class="info-item">
+                <label>邮箱</label>
+                <span th:text="${user.email != null ? user.email : '-'}"></span>
+            </div>
+            <div class="info-item">
+                <label>手机号</label>
+                <span th:text="${user.phone != null ? user.phone : '-'}"></span>
+            </div>
+            <div class="info-item">
+                <label>VIP 状态</label>
+                <span th:class="${user.isVip != null and user.isVip == 1} ? 'vip' : ''"
+                      th:text="${user.isVip != null and user.isVip == 1 ? 'VIP 用户' : '普通用户'}"></span>
+            </div>
+            <div class="info-item">
+                <label>账号状态</label>
+                <span th:if="${user.status == 'ACTIVE'}" class="status-normal">正常</span>
+                <span th:if="${user.status == 'BANNED'}" class="status-ban">封禁</span>
+                <span th:if="${user.status != 'ACTIVE' and user.status != 'BANNED'}" class="status-ban"
+                      th:text="${user.status == 'DISABLED' ? '禁用' : user.status}"></span>
+            </div>
+            <div class="info-item">
+                <label>注册时间</label>
+                <span th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+            </div>
+            <div class="info-item">
+                <label>后台权限</label>
+                <span th:if="${adminRecord != null && adminRecord.permissionLevel == 'SUPER_ADMIN'}">
+                    超级管理员 <span class="role-tag role-super">SUPER_ADMIN</span>
+                </span>
+                <span th:if="${adminRecord != null && adminRecord.permissionLevel == 'ADMIN'}">
+                    管理员 <span class="role-tag role-admin">ADMIN</span>
+                </span>
+                <span th:if="${adminRecord == null or (adminRecord.permissionLevel != 'SUPER_ADMIN' and adminRecord.permissionLevel != 'ADMIN')}">
+                    普通用户 <span class="role-tag role-user">无后台权限</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-box">
+        <h2>管理员权限</h2>
+
+        <div class="action-row">
+            <div>
+                <strong>设为管理员</strong>
+                <p>授予后台登录权限（ADMIN），可管理用户、订单等</p>
+            </div>
+            <form th:action="@{/admin/users/grant-admin}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-admin-role"
+                        th:disabled="${isSelf || (adminRecord != null && (adminRecord.permissionLevel == 'ADMIN' || adminRecord.permissionLevel == 'SUPER_ADMIN'))}"
+                        onclick="return confirm('确定将该用户设为管理员吗？');">
+                    设为管理员
+                </button>
+            </form>
+        </div>
+
+        <div class="action-row" th:if="${operatorSuperAdmin}">
+            <div>
+                <strong>设为超级管理员</strong>
+                <p>授予最高权限（SUPER_ADMIN），可设置/解除其他管理员</p>
+            </div>
+            <form th:action="@{/admin/users/grant-super-admin}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-super-admin"
+                        th:disabled="${isSelf || (adminRecord != null && adminRecord.permissionLevel == 'SUPER_ADMIN')}"
+                        onclick="return confirm('确定将该用户设为超级管理员吗？');">
+                    设为超级管理员
+                </button>
+            </form>
+        </div>
+
+        <div class="action-row">
+            <div>
+                <strong>解除管理员</strong>
+                <p>删除 admin 表记录，该用户将无法登录后台</p>
+            </div>
+            <form th:action="@{/admin/users/revoke-admin}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-revoke-admin"
+                        th:disabled="${isSelf || adminRecord == null || (adminRecord.permissionLevel != 'ADMIN' && adminRecord.permissionLevel != 'SUPER_ADMIN') || (!operatorSuperAdmin && adminRecord != null && adminRecord.permissionLevel == 'SUPER_ADMIN')}"
+                        onclick="return confirm('确定解除该用户的管理员权限吗？');">
+                    解除管理员
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="action-box">
+        <h2>VIP 与账号状态</h2>
+
+        <div class="action-row">
+            <div>
+                <strong>设为 VIP</strong>
+                <p>将该用户升级为 VIP 用户（is_vip = 1）</p>
+            </div>
+            <form th:action="@{/admin/users/set-vip}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-vip"
+                        th:disabled="${user.isVip != null and user.isVip == 1}"
+                        onclick="return confirm('确定将该用户设为 VIP 吗？');">
+                    设为 VIP
+                </button>
+            </form>
+        </div>
+
+        <div class="action-row">
+            <div>
+                <strong>取消 VIP</strong>
+                <p>将该用户降为普通用户（is_vip = 0）</p>
+            </div>
+            <form th:action="@{/admin/users/cancel-vip}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-vip"
+                        th:disabled="${user.isVip == null or user.isVip != 1}"
+                        onclick="return confirm('确定取消该用户的 VIP 吗？');">
+                    取消 VIP
+                </button>
+            </form>
+        </div>
+
+        <div class="action-row">
+            <div>
+                <strong>封禁用户</strong>
+                <p>将用户状态设为「封禁」，该用户将无法登录</p>
+            </div>
+            <form th:action="@{/admin/users/ban}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="btn btn-ban"
+                        th:disabled="${user.status == 'BANNED'}"
+                        onclick="return confirm('确定封禁该用户吗？');">
+                    封禁用户
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer-actions">
+        <a href="/admin/users" class="btn-back">← 返回用户列表</a>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+spring:
+  # 本地密码请写在 application-local.yaml（见 application-local.yaml.example）
+  config:
+    import: optional:classpath:application-local.yaml
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ec_system?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:zjd056088}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    encoding: UTF-8
+    cache: false
+
+  # ── 邮件服务 ──────────────────────────────────────
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 3412715680@qq.com
+    password: ihzyqwcbclkidbaf
+    properties:
+      mail.smtp.ssl.enable: true
+      mail.smtp.auth: true
+
+  session:
+    timeout: 30m
+
+  # 不限制为 /static/**，与 product 原工程一致：/index.html、/admin.html 可直接访问
+
+mybatis:
+  type-aliases-package: com.ec.pojo
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true   # 下划线→驼峰自动映射（created_at → createdAt）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# ── 微信 OAuth ──────────────────────────────────────
+wechat:
+  appid: wxca7902e2d799bc03
+  secret: 85c53e836a01a463836b05b6da72726d
+  redirect-uri: https://8695-59-64-129-127.ngrok-free.app/user/wechat/callback
+
+server:
+  port: 8080
+  servlet:
+    context-path: /

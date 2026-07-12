@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ec.mapper.ProductReviewMapper">
+
+    <!-- 新增评价 -->
+    <insert id="insert" parameterType="com.ec.pojo.ProductReview">
+        INSERT INTO product_reviews (
+            product_id, user_id, order_id, rating, content, images, reply, status, created_at, updated_at
+        ) VALUES (
+            #{productId}, #{userId}, #{orderId}, #{rating}, #{content}, #{images}, #{reply}, #{status}, NOW(), NOW()
+        )
+    </insert>
+
+    <!-- 根据商品ID查询评价列表（分页） -->
+    <select id="selectByProductId" resultType="com.ec.pojo.ProductReview">
+        SELECT *
+        FROM product_reviews
+        WHERE product_id = #{productId}
+          AND status = 'VISIBLE'
+        ORDER BY created_at DESC
+            LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 查询商品平均评分和评价总数 -->
+    <select id="selectAvgScoreByProductId" resultType="com.ec.pojo.ProductReviewSummary">
+        SELECT
+            product_id AS productId,
+            ROUND(AVG(rating), 2) AS avgScore,
+            COUNT(*) AS reviewCount
+        FROM product_reviews
+        WHERE product_id = #{productId}
+          AND status = 'VISIBLE'
+        GROUP BY product_id
+    </select>
+
+    <!-- 逻辑删除评价（更新状态） -->
+    <update id="updateStatusById">
+        UPDATE product_reviews
+        SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByOrderId" resultType="com.ec.pojo.ProductReview">
+        SELECT id, product_id AS productId, user_id AS userId, order_id AS orderId,
+               rating, content, images, reply, status,
+               created_at AS createdAt, updated_at AS updatedAt
+        FROM product_reviews
+        WHERE order_id = #{orderId}
+          AND status = 'VISIBLE'
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByOrderIdAndProductId" resultType="com.ec.pojo.ProductReview">
+        SELECT id, product_id AS productId, user_id AS userId, order_id AS orderId,
+               rating, content, images, reply, status,
+               created_at AS createdAt, updated_at AS updatedAt
+        FROM product_reviews
+        WHERE order_id = #{orderId}
+          AND product_id = #{productId}
+          AND status = 'VISIBLE'
+        LIMIT 1
+    </select>
+
+    <select id="findAll" resultType="com.ec.pojo.ProductReview">
+        SELECT id, product_id AS productId, user_id AS userId, order_id AS orderId,
+               rating, content, images, reply, status,
+               created_at AS createdAt, updated_at AS updatedAt
+        FROM product_reviews
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectById" resultType="com.ec.pojo.ProductReview">
+        SELECT id, product_id AS productId, user_id AS userId, order_id AS orderId,
+               rating, content, images, reply, status,
+               created_at AS createdAt, updated_at AS updatedAt
+        FROM product_reviews
+        WHERE id = #{id}
+    </select>
+
+    <select id="searchReviews" resultType="com.ec.pojo.ProductReview">
+        SELECT id, product_id AS productId, user_id AS userId, order_id AS orderId,
+               rating, content, images, reply, status,
+               created_at AS createdAt, updated_at AS updatedAt
+        FROM product_reviews
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="orderId != null">AND order_id = #{orderId}</if>
+            <if test="productId != null">AND product_id = #{productId}</if>
+            <if test="rating != null">AND rating = #{rating}</if>
+            <if test="status != null and status != ''">AND status = #{status}</if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+    <update id="updateReplyById">
+        UPDATE product_reviews
+        SET reply = #{reply}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM product_reviews WHERE id = #{id}
+    </delete>
+
+</mapper>

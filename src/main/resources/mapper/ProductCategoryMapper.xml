@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ec.mapper.ProductCategoryMapper">
+
+    <select id="findAll" resultType="com.ec.pojo.ProductCategory">
+        SELECT category_id as categoryId, name, parent_id as parentId FROM product_category ORDER BY category_id
+    </select>
+
+    <select id="findRoots" resultType="com.ec.pojo.ProductCategory">
+        SELECT category_id as categoryId, name, parent_id as parentId FROM product_category WHERE parent_id IS NULL
+    </select>
+
+    <select id="findByParentId" resultType="com.ec.pojo.ProductCategory">
+        SELECT category_id as categoryId, name, parent_id as parentId FROM product_category WHERE parent_id = #{parentId}
+    </select>
+
+    <select id="findById" resultType="com.ec.pojo.ProductCategory">
+        SELECT category_id as categoryId, name, parent_id as parentId FROM product_category WHERE category_id = #{categoryId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="categoryId">
+        INSERT INTO product_category (name, parent_id) VALUES (#{name}, #{parentId})
+    </insert>
+
+    <update id="update">
+        UPDATE product_category SET name=#{name}, parent_id=#{parentId} WHERE category_id=#{categoryId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM product_category WHERE category_id=#{categoryId}
+    </delete>
+
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*) FROM product_category WHERE parent_id=#{categoryId}
+    </select>
+</mapper>

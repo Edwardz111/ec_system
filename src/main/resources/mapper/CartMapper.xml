@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ec.mapper.CartMapper">
+    <insert id="insert" parameterType="com.ec.pojo.Cart">
+        INSERT INTO cart_items (user_id, product_id, quantity, created_at, updated_at)
+        VALUES (#{userId}, #{productId}, #{quantity}, NOW(), NOW())
+    </insert>
+    
+    <update id="update" parameterType="com.ec.pojo.Cart">
+        UPDATE cart_items
+        SET quantity = #{quantity}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM cart_items WHERE id = #{id}
+    </delete>
+    
+    <delete id="deleteByUserIdAndProductId">
+        DELETE FROM cart_items WHERE user_id = #{userId} AND product_id = #{productId}
+    </delete>
+    
+    <select id="findByUserIdAndProductId" resultType="com.ec.pojo.Cart">
+        SELECT id, user_id as userId, product_id as productId, quantity, created_at as createTime, updated_at as updateTime 
+        FROM cart_items WHERE user_id = #{userId} AND product_id = #{productId}
+    </select>
+    
+    <select id="findByUserId" resultType="com.ec.pojo.Cart">
+        SELECT id, user_id as userId, product_id as productId, quantity, created_at as createTime, updated_at as updateTime 
+        FROM cart_items WHERE user_id = #{userId}
+    </select>
+    
+    <select id="findAll" resultType="com.ec.pojo.Cart">
+        SELECT id, user_id as userId, product_id as productId, quantity, created_at as createTime, updated_at as updateTime 
+        FROM cart_items
+    </select>
+    
+    <delete id="deleteByUserId" parameterType="java.lang.Long">
+        DELETE FROM cart_items WHERE user_id = #{userId}
+    </delete>
+</mapper>

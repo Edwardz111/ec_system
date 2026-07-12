@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ec.mapper.PromotionMapper">
+
+    <select id="findAll" resultType="com.ec.pojo.Promotion">
+        SELECT id, name, type, description, rule, enabled FROM promotions ORDER BY id DESC
+    </select>
+
+    <select id="findById" resultType="com.ec.pojo.Promotion">
+        SELECT id, name, type, description, rule, enabled FROM promotions WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO promotions (name, type, description, rule, enabled)
+        VALUES (#{name}, #{type}, #{description}, #{rule}, COALESCE(#{enabled}, 1))
+    </insert>
+
+    <update id="update">
+        UPDATE promotions SET name=#{name}, type=#{type}, description=#{description},
+            rule=#{rule}, enabled=#{enabled} WHERE id=#{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM promotions WHERE id=#{id}
+    </delete>
+
+    <select id="findProductIds" resultType="long">
+        SELECT product_id FROM promotion_products WHERE promotion_id=#{promotionId}
+    </select>
+
+    <delete id="deletePromotionProducts">
+        DELETE FROM promotion_products WHERE promotion_id=#{promotionId}
+    </delete>
+
+    <insert id="insertPromotionProducts">
+        INSERT INTO promotion_products (promotion_id, product_id) VALUES
+        <foreach collection="productIds" item="pid" separator=",">
+            (#{promotionId}, #{pid})
+        </foreach>
+    </insert>
+</mapper>

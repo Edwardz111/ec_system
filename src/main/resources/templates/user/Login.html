@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>登录 - 电商系统</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f0f2f5; display: flex; align-items: center; min-height: 100vh; }
+        .login-card {
+            width: 440px; margin: 0 auto;
+            border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.12);
+        }
+        .nav-tabs .nav-link { color: #555; font-weight: 500; border: none; padding: 10px 16px; }
+        .nav-tabs .nav-link.active {
+            color: #0d6efd; border-bottom: 2px solid #0d6efd;
+            background: transparent;
+        }
+        .nav-tabs { border-bottom: 1px solid #dee2e6; }
+        .wechat-wrap { text-align: center; padding: 16px 0; }
+        #tips { font-size: .85rem; min-height: 20px; }
+        .btn-code { min-width: 108px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+    </style>
+</head>
+<body>
+<div class="card login-card p-4">
+    <h4 class="text-center mb-4 fw-bold">🛒 电商系统 · 登录</h4>
+
+    <!-- Tab 导航 -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <button class="nav-link active" onclick="switchTab('pwd', this)">密码登录</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('email', this)">邮箱验证码</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('wechat', this)">微信扫码</button>
+        </li>
+    </ul>
+
+    <!-- ① 密码登录 -->
+    <div id="tab-pwd" class="tab-pane active">
+        <div class="mb-3">
+            <input id="pwd-account" type="text" class="form-control" placeholder="用户名 / 邮箱">
+        </div>
+        <div class="mb-3">
+            <input id="pwd-password" type="password" class="form-control" placeholder="密码">
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+            <small><a href="#">忘记密码？</a></small>
+            <small><a href="/user/register">没有账号？注册</a></small>
+        </div>
+        <button class="btn btn-primary w-100" onclick="loginByPwd()">登 录</button>
+    </div>
+
+    <!-- ② 邮箱验证码登录 -->
+    <div id="tab-email" class="tab-pane">
+        <div class="mb-3">
+            <input id="email-addr" type="email" class="form-control" placeholder="请输入邮箱">
+        </div>
+        <div class="mb-3 input-group">
+            <input id="email-code" type="text" class="form-control"
+                   placeholder="6位验证码" maxlength="6">
+            <button class="btn btn-outline-secondary btn-code"
+                    id="btnSendCode" onclick="sendLoginCode()">发送验证码</button>
+        </div>
+        <button class="btn btn-primary w-100" onclick="loginByCode()">登 录</button>
+    </div>
+
+    <!-- ③ 微信扫码登录 -->
+    <div id="tab-wechat" class="tab-pane">
+        <div class="wechat-wrap">
+            <p class="text-muted mb-3 small">
+                使用微信扫描二维码，扫码后在手机上确认登录
+            </p>
+            <div id="wechat-qr-box">
+                <button class="btn btn-success px-4" onclick="loadWechatQr()">
+                    点击生成微信二维码
+                </button>
+            </div>
+            <p class="mt-2 text-muted" style="font-size:.78rem" id="wechat-tip"></p>
+        </div>
+    </div>
+
+    <!-- 提示区 -->
+    <div id="tips" class="mt-3 text-center"></div>
+</div>
+
+<!-- 微信绑定弹窗 -->
+<div class="modal fade" id="bindModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content p-4">
+            <h5 class="mb-3">首次微信登录 · 绑定账号</h5>
+            <p class="text-muted small mb-3">请用已有账号绑定，绑定后下次扫码直接登录</p>
+            <input id="bind-account" type="text" class="form-control mb-2" placeholder="用户名 / 邮箱">
+            <input id="bind-pwd" type="password" class="form-control mb-3" placeholder="密码">
+            <button class="btn btn-primary w-100" onclick="bindAndLogin()">确认绑定并登录</button>
+            <hr>
+            <small class="text-muted">没有账号？<a href="/user/register">先注册</a></small>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Tab 切换 ────────────────────────────────────────────────
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+        clearTip();
+    }
+
+    function tip(msg, ok = false) {
+        const el = document.getElementById('tips');
+        el.style.color = ok ? '#198754' : '#dc3545';
+        el.textContent = msg;
+    }
+    function clearTip() { document.getElementById('tips').textContent = ''; }
+
+    // ── ① 密码登录 ──────────────────────────────────────────────
+    async function loginByPwd() {
+        const account  = document.getElementById('pwd-account').value.trim();
+        const password = document.getElementById('pwd-password').value;
+        if (!account || !password) { tip('请填写账号和密码'); return; }
+
+        const res = await postJson('/user/login', { account, password });
+        if (res.code === 200) {
+            tip('登录成功，跳转中…', true);
+            setTimeout(() => location.href = '/index', 800);
+        } else {
+            tip(res.msg || '登录失败');
+        }
+    }
+
+    // ── ② 邮箱验证码登录 ─────────────────────────────────────────
+    let codeTimer = 0;
+
+    async function sendLoginCode() {
+        if (codeTimer > 0) return;
+        const email = document.getElementById('email-addr').value.trim();
+        if (!email) { tip('请先填写邮箱'); return; }
+
+        // ⚠️ 发送验证码必须用 POST
+        const res = await postJson('/user/sendCode?email=' + encodeURIComponent(email) + '&type=LOGIN', {});
+        if (res.code === 200) {
+            tip('验证码已发送，请查收邮件 📧', true);
+            startCountdown('btnSendCode');
+        } else {
+            tip(res.msg || '发送失败');
+        }
+    }
+
+    function startCountdown(btnId) {
+        codeTimer = 60;
+        const btn = document.getElementById(btnId);
+        const t = setInterval(() => {
+            btn.textContent = codeTimer-- + 's 后重发';
+            btn.disabled = true;
+            if (codeTimer < 0) {
+                clearInterval(t);
+                btn.textContent = '发送验证码';
+                btn.disabled = false;
+                codeTimer = 0;
+            }
+        }, 1000);
+    }
+
+    async function loginByCode() {
+        const email = document.getElementById('email-addr').value.trim();
+        const code  = document.getElementById('email-code').value.trim();
+        if (!email || !code) { tip('请填写邮箱和验证码'); return; }
+
+        // loginByCode 接口是 POST
+        const res = await postJson('/user/loginByCode?email=' + encodeURIComponent(email) + '&code=' + code, {});
+        if (res.code === 200) {
+            tip('登录成功，跳转中…', true);
+            setTimeout(() => location.href = '/index', 800);
+        } else {
+            tip(res.msg || '验证码错误');
+        }
+    }
+
+    // ── ③ 微信扫码登录 ───────────────────────────────────────────
+    let pendingOpenid = '';
+
+    async function loadWechatQr() {
+        const res = await getJson('/user/wechat/qr');
+        if (res.code !== 200) { tip(res.msg || '获取二维码失败'); return; }
+
+        const { url, state } = res.data;
+        const box = document.getElementById('wechat-qr-box');
+
+        // 使用微信 JS-SDK 内嵌二维码（需配置公众号网页授权域名）
+        box.innerHTML = `
+        <iframe src="${url}"
+                style="width:300px;height:380px;border:none;"
+                scrolling="no">
+        </iframe>`;
+        document.getElementById('wechat-tip').textContent =
+            '扫码后在手机上点击"确认登录"，页面将自动跳转';
+
+        // 轮询等待扫码结果（每 2 秒检查一次 session 是否已写入）
+        pollWechatLogin(30);
+    }
+
+    function pollWechatLogin(remaining) {
+        if (remaining <= 0) {
+            tip('二维码已过期，请重新生成');
+            document.getElementById('wechat-qr-box').innerHTML =
+                '<button class="btn btn-success px-4" onclick="loadWechatQr()">重新生成二维码</button>';
+            return;
+        }
+        setTimeout(async () => {
+            const res = await getJson('/user/info');
+            if (res.code === 200) {
+                tip('微信登录成功，跳转中…', true);
+                setTimeout(() => location.href = '/index', 800);
+            } else {
+                pollWechatLogin(remaining - 1);
+            }
+        }, 2000);
+    }
+
+    // 微信 OAuth 回调后带参数返回登录页
+    (function checkWechatReturn() {
+        const p = new URLSearchParams(location.search);
+        const status = p.get('wechat_status');
+        if (status === 'login') {
+            tip('微信登录成功，跳转中…', true);
+            setTimeout(() => location.href = '/index', 800);
+        } else if (status === 'bind') {
+            pendingOpenid = p.get('openid') || '';
+            new bootstrap.Modal(document.getElementById('bindModal')).show();
+        }
+    })();
+
+    async function bindAndLogin() {
+        const account  = document.getElementById('bind-account').value.trim();
+        const password = document.getElementById('bind-pwd').value;
+
+        const loginRes = await postJson('/user/login', { account, password });
+        if (loginRes.code !== 200) { tip(loginRes.msg); return; }
+
+        const bindRes = await postJson('/user/wechat/bind?openid=' + encodeURIComponent(pendingOpenid), {});
+        if (bindRes.code === 200) {
+            tip('绑定成功，跳转中…', true);
+            setTimeout(() => location.href = '/index', 800);
+        } else {
+            tip(bindRes.msg);
+        }
+    }
+
+    // ── HTTP 工具 ────────────────────────────────────────────────
+    async function postJson(url, data) {
+        try {
+            const r = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await r.json();
+        } catch (e) {
+            return { code: 500, msg: '网络请求失败' };
+        }
+    }
+
+    async function getJson(url) {
+        try {
+            const r = await fetch(url);
+            return await r.json();
+        } catch (e) {
+            return { code: 500, msg: '网络请求失败' };
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

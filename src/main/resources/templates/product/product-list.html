@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品列表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .product-item {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .product-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+        .product-item img {
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .product-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">商品列表</h2>
+        
+        <div class="row">
+            <div th:each="product : ${products}" class="col-md-4">
+                <div class="product-item">
+                    <img th:src="${product.image}" th:alt="${product.name}" class="img-fluid">
+                    <h5 class="mt-3" th:text="${product.name}"></h5>
+                    <p class="product-price">¥<span th:text="${product.price}"></span></p>
+                    <button class="btn btn-primary btn-block mt-3 add-to-cart" th:data-product-id="${product.id}" th:data-product-name="${product.name}" th:data-product-price="${product.price}" th:data-product-image="${product.image}">加入购物车</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-5 text-center">
+            <a href="/order/cart?userId=1" class="btn btn-secondary">返回购物车</a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 添加商品到购物车
+        document.addEventListener('DOMContentLoaded', function() {
+            const addToCartButtons = document.querySelectorAll('.add-to-cart');
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = parseInt(this.getAttribute('data-product-id'));
+                    const productName = this.getAttribute('data-product-name');
+                    const productPrice = parseFloat(this.getAttribute('data-product-price'));
+                    const productImage = this.getAttribute('data-product-image');
+                    const quantity = 1;
+                    
+                    const cart = {
+                        userId: 1,
+                        productId: productId,
+                        productName: productName,
+                        productImage: productImage,
+                        quantity: quantity,
+                        price: productPrice
+                    };
+                    
+                    fetch('/order/addCart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(cart)
+                    }).then(response => response.text())
+                      .then(data => {
+                          if (data === 'success') {
+                              alert('商品已成功加入购物车！');
+                          } else {
+                              alert('加入购物车失败，请重试！');
+                          }
+                      });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>管理后台 - 商品与分类管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #f5f5f5; }
+        .navbar-brand { font-weight: 700; color: #ff5000 !important; }
+        .card { margin-top: 16px; }
+        .form-label { font-size: 14px; }
+        .badge-type { font-size: 12px; }
+        .admin-nav-link { font-size: 14px; margin-left: 12px; text-decoration: none; color: #333; }
+        .admin-nav-link:hover { color: #ff5000; }
+        .admin-nav-link.active { color: #ff5000; font-weight: 600; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="/admin/dashboard">电商后台</a>
+        <div class="d-flex flex-wrap align-items-center ms-auto">
+            <a class="admin-nav-link" href="/admin/dashboard">首页</a>
+            <a class="admin-nav-link" href="/admin/users">用户</a>
+            <a class="admin-nav-link active" href="/product_admin.html">商品</a>
+            <a class="admin-nav-link" href="/admin/orders">订单</a>
+            <a class="admin-nav-link" href="/admin/reviews">评价</a>
+            <a class="admin-nav-link" href="/index.html">前台商城</a>
+            <a class="admin-nav-link" href="/admin/logout">退出</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-4">
+    <ul class="nav nav-tabs mt-3" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="cat-tab" data-bs-toggle="tab" data-bs-target="#catPane" type="button" role="tab">分类管理</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="prod-tab" data-bs-toggle="tab" data-bs-target="#prodPane" type="button" role="tab">商品管理</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="promo-tab" data-bs-toggle="tab" data-bs-target="#promoPane" type="button" role="tab">活动管理</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabContent">
+        <!-- 分类管理 -->
+        <div class="tab-pane fade show active" id="catPane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card">
+                        <div class="card-header">新建 / 编辑 分类</div>
+                        <div class="card-body">
+                            <form id="categoryForm">
+                                <input type="hidden" id="catId" />
+                                <div class="mb-3">
+                                    <label class="form-label">分类名称</label>
+                                    <input type="text" class="form-control" id="catName" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">父分类（可选）</label>
+                                    <select class="form-select" id="catParent">
+                                        <option value="">无（作为大分类）</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary me-2">保存</button>
+                                <button type="button" class="btn btn-secondary" id="catResetBtn">重置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card">
+                        <div class="card-header">分类列表</div>
+                        <div class="card-body">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>父分类</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="catTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商品管理 -->
+        <div class="tab-pane fade" id="prodPane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">新建 / 编辑 商品</div>
+                        <div class="card-body">
+                            <form id="productForm">
+                                <input type="hidden" id="prodId" />
+                                <div class="mb-3">
+                                    <label class="form-label">商品名称</label>
+                                    <input type="text" class="form-control" id="prodName" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">描述</label>
+                                    <textarea class="form-control" id="prodDesc" rows="2"></textarea>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <label class="form-label">价格</label>
+                                        <input type="number" step="0.01" class="form-control" id="prodPrice" required />
+                                    </div>
+                                    <div class="col">
+                                        <label class="form-label">库存</label>
+                                        <input type="number" class="form-control" id="prodStock" required />
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">商品分类（必须选择细化分类）</label>
+                                    <select class="form-select" id="prodCategory" required>
+                                        <option value="">请选择最终分类</option>
+                                    </select>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="prodEnabled" checked />
+                                    <label class="form-check-label" for="prodEnabled">上架</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary me-2">保存</button>
+                                <button type="button" class="btn btn-secondary" id="prodResetBtn">重置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">商品列表</div>
+                        <div class="card-body">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>价格</th>
+                                    <th>库存</th>
+                                    <th>分类</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="prodTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 活动管理 -->
+        <div class="tab-pane fade" id="promoPane" role="tabpanel">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card">
+                        <div class="card-header">新建 / 编辑 活动</div>
+                        <div class="card-body">
+                            <form id="promoForm">
+                                <input type="hidden" id="promoId" />
+                                <div class="mb-3">
+                                    <label class="form-label">活动名称</label>
+                                    <input type="text" class="form-control" id="promoName" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">活动类型</label>
+                                    <select class="form-select" id="promoType" required>
+                                        <option value="FULL_REDUCTION">满减</option>
+                                        <option value="FLASH_SALE">秒杀</option>
+                                        <option value="COUPON">优惠券</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">规则描述</label>
+                                    <input type="text" class="form-control" id="promoRule" placeholder="例：满200减50 / 秒杀价199 / 满100减10券" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">备注说明</label>
+                                    <textarea class="form-control" id="promoDesc" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">绑定商品ID（用英文逗号分隔）</label>
+                                    <input type="text" class="form-control" id="promoProductIds" placeholder="例如：1,2,3" />
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="promoEnabled" checked />
+                                    <label class="form-check-label" for="promoEnabled">启用</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary me-2">保存</button>
+                                <button type="button" class="btn btn-secondary" id="promoResetBtn">重置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card">
+                        <div class="card-header">活动列表</div>
+                        <div class="card-body">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>类型</th>
+                                    <th>规则</th>
+                                    <th>绑定商品数</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="promoTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCategories();
+        loadLeafCategories();
+        loadProducts();
+        loadPromotions();
+
+        initCategoryForm();
+        initProductForm();
+        initPromoForm();
+    });
+
+    // ========== 分类管理 ==========
+    function loadCategories() {
+        fetch('/api/admin/categories')
+            .then(r => r.json())
+            .then(list => {
+                const body = document.getElementById('catTableBody');
+                body.innerHTML = '';
+                const parentSelect = document.getElementById('catParent');
+                parentSelect.innerHTML = '<option value="">无（作为大分类）</option>';
+
+                const map = new Map();
+                list.forEach(c => map.set(c.categoryId, c));
+
+                list.forEach(c => {
+                    const tr = document.createElement('tr');
+                    const parentName = c.parentId ? (map.get(c.parentId)?.name || ('ID ' + c.parentId)) : '';
+                    tr.innerHTML = `
+                        <td>${c.categoryId}</td>
+                        <td>${c.name}</td>
+                        <td>${parentName || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="fillCategoryForm(${c.categoryId})">编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${c.categoryId})">删除</button>
+                        </td>`;
+                    body.appendChild(tr);
+
+                    const opt = document.createElement('option');
+                    opt.value = c.categoryId;
+                    opt.textContent = `${c.name} (ID:${c.categoryId})`;
+                    parentSelect.appendChild(opt);
+                });
+            });
+    }
+
+    function fillCategoryForm(id) {
+        fetch('/api/admin/categories')
+            .then(r => r.json())
+            .then(list => {
+                const c = list.find(x => x.categoryId === id);
+                if (!c) return;
+                document.getElementById('catId').value = c.categoryId;
+                document.getElementById('catName').value = c.name;
+                document.getElementById('catParent').value = c.parentId || '';
+            });
+    }
+
+    function deleteCategory(id) {
+        if (!confirm('确定删除该分类？如分类下有商品则无法删除。')) return;
+        fetch('/api/admin/categories/' + id, { method: 'DELETE' })
+            .then(r => {
+                if (!r.ok) { return r.text().then(t => { throw new Error(t || '删除失败'); }); }
+                loadCategories();
+                loadLeafCategories();
+            })
+            .catch(e => alert(e.message));
+    }
+
+    function initCategoryForm() {
+        const form = document.getElementById('categoryForm');
+        document.getElementById('catResetBtn').addEventListener('click', () => {
+            document.getElementById('catId').value = '';
+            form.reset();
+        });
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('catId').value;
+            const payload = {
+                name: document.getElementById('catName').value.trim(),
+                parentId: document.getElementById('catParent').value || null
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? '/api/admin/categories/' + id : '/api/admin/categories';
+            fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => {
+                if (!r.ok) { return r.text().then(t => { throw new Error(t || '保存失败'); }); }
+                document.getElementById('catId').value = '';
+                form.reset();
+                loadCategories();
+                loadLeafCategories();
+            }).catch(e => alert(e.message));
+        });
+    }
+
+    // ========== 商品管理 ==========
+    function loadLeafCategories() {
+        fetch('/api/admin/categories/leaves')
+            .then(r => r.json())
+            .then(list => {
+                const sel = document.getElementById('prodCategory');
+                sel.innerHTML = '<option value="">请选择最终分类</option>';
+                list.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.categoryId;
+                    opt.textContent = `${c.name} (ID:${c.categoryId})`;
+                    sel.appendChild(opt);
+                });
+            });
+    }
+
+    function loadProducts() {
+        fetch('/api/admin/products?page=0&size=100')
+            .then(r => r.json())
+            .then(page => {
+                const body = document.getElementById('prodTableBody');
+                body.innerHTML = '';
+                (page.content || []).forEach(p => {
+                    const tr = document.createElement('tr');
+                    const catName = p.category ? p.category.name : '-';
+                    tr.innerHTML = `
+                        <td>${p.id}</td>
+                        <td>${p.name}</td>
+                        <td>￥${Number(p.price).toFixed(2)}</td>
+                        <td>${p.stock}</td>
+                        <td>${catName}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick='fillProductForm(${JSON.stringify(p.id)})'>编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">删除</button>
+                        </td>`;
+                    body.appendChild(tr);
+                });
+            });
+    }
+
+    function fillProductForm(id) {
+        fetch('/api/admin/products?page=0&size=100')
+            .then(r => r.json())
+            .then(page => {
+                const p = (page.content || []).find(x => x.id === id);
+                if (!p) return;
+                document.getElementById('prodId').value = p.id;
+                document.getElementById('prodName').value = p.name;
+                document.getElementById('prodDesc').value = p.description || '';
+                document.getElementById('prodPrice').value = p.price;
+                document.getElementById('prodStock').value = p.stock;
+                document.getElementById('prodCategory').value = p.category ? p.category.categoryId : '';
+                document.getElementById('prodEnabled').checked = p.enabled;
+            });
+    }
+
+    function deleteProduct(id) {
+        if (!confirm('确定删除该商品？')) return;
+        fetch('/api/admin/products/' + id, { method: 'DELETE' })
+            .then(() => loadProducts())
+            .catch(e => alert(e.message));
+    }
+
+    function initProductForm() {
+        const form = document.getElementById('productForm');
+        document.getElementById('prodResetBtn').addEventListener('click', () => {
+            document.getElementById('prodId').value = '';
+            form.reset();
+            document.getElementById('prodEnabled').checked = true;
+        });
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('prodId').value;
+            const payload = {
+                name: document.getElementById('prodName').value.trim(),
+                description: document.getElementById('prodDesc').value.trim(),
+                price: parseFloat(document.getElementById('prodPrice').value),
+                stock: parseInt(document.getElementById('prodStock').value),
+                categoryId: document.getElementById('prodCategory').value ? Number(document.getElementById('prodCategory').value) : null,
+                enabled: document.getElementById('prodEnabled').checked
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? '/api/admin/products/' + id : '/api/admin/products';
+            fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => {
+                if (!r.ok) { return r.text().then(t => { throw new Error(t || '保存失败'); }); }
+                document.getElementById('prodId').value = '';
+                form.reset();
+                document.getElementById('prodEnabled').checked = true;
+                loadProducts();
+            }).catch(e => alert(e.message));
+        });
+    }
+
+    // ========== 活动管理 ==========
+    function loadPromotions() {
+        fetch('/api/admin/promotions')
+            .then(r => r.json())
+            .then(list => {
+                const body = document.getElementById('promoTableBody');
+                body.innerHTML = '';
+                (list || []).forEach(p => {
+                    const tr = document.createElement('tr');
+                    const count = (p.products || []).length;
+                    tr.innerHTML = `
+                        <td>${p.id}</td>
+                        <td>${p.name}</td>
+                        <td><span class="badge bg-info badge-type">${p.type}</span></td>
+                        <td>${p.rule || ''}</td>
+                        <td>${count}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick='fillPromoForm(${JSON.stringify(p.id)})'>编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deletePromotion(${p.id})">删除</button>
+                        </td>`;
+                    body.appendChild(tr);
+                });
+            });
+    }
+
+    function fillPromoForm(id) {
+        fetch('/api/admin/promotions')
+            .then(r => r.json())
+            .then(list => {
+                const p = (list || []).find(x => x.id === id);
+                if (!p) return;
+                document.getElementById('promoId').value = p.id;
+                document.getElementById('promoName').value = p.name;
+                document.getElementById('promoType').value = p.type;
+                document.getElementById('promoRule').value = p.rule || '';
+                document.getElementById('promoDesc').value = p.description || '';
+                document.getElementById('promoEnabled').checked = p.enabled;
+                const ids = (p.products || []).map(pp => pp.id).join(',');
+                document.getElementById('promoProductIds').value = ids;
+            });
+    }
+
+    function deletePromotion(id) {
+        if (!confirm('确定删除该活动？')) return;
+        fetch('/api/admin/promotions/' + id, { method: 'DELETE' })
+            .then(() => loadPromotions())
+            .catch(e => alert(e.message));
+    }
+
+    function initPromoForm() {
+        const form = document.getElementById('promoForm');
+        document.getElementById('promoResetBtn').addEventListener('click', () => {
+            document.getElementById('promoId').value = '';
+            form.reset();
+            document.getElementById('promoEnabled').checked = true;
+        });
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const id = document.getElementById('promoId').value;
+            const idsStr = document.getElementById('promoProductIds').value.trim();
+            let productIds = [];
+            if (idsStr) {
+                productIds = idsStr.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+            }
+            const payload = {
+                name: document.getElementById('promoName').value.trim(),
+                type: document.getElementById('promoType').value,
+                rule: document.getElementById('promoRule').value.trim(),
+                description: document.getElementById('promoDesc').value.trim(),
+                enabled: document.getElementById('promoEnabled').checked,
+                productIds
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? '/api/admin/promotions/' + id : '/api/admin/promotions';
+            fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => {
+                if (!r.ok) { return r.text().then(t => { throw new Error(t || '保存失败'); }); }
+                document.getElementById('promoId').value = '';
+                form.reset();
+                document.getElementById('promoEnabled').checked = true;
+                loadPromotions();
+            }).catch(e => alert(e.message));
+        });
+    }
+</script>
+</body>
+</html>

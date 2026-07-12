@@ -1,0 +1,254 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>评价管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { display: flex; height: 100vh; background-color: #f4f6f9; }
+        .sidebar {
+            width: 20%; background-color: rgba(3, 68, 248, 0.83); color: white; padding: 20px;
+        }
+        .sidebar h2 { text-align: center; margin-bottom: 40px; font-size: 28px; font-weight: bold; }
+        .sidebar ul { list-style: none; }
+        .sidebar li {
+            background-color: #3498db; padding: 15px; margin-bottom: 15px;
+            border-radius: 8px; text-align: center; font-size: 18px;
+        }
+        .sidebar a { color: white; text-decoration: none; display: block; }
+        .main { width: 80%; padding: 25px; overflow-y: auto; }
+        .header {
+            background-color: white; padding: 20px; border-radius: 10px;
+            margin-bottom: 20px; box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: gray; }
+        .msg {
+            padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+            background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+        }
+        .search-box {
+            background-color: white; padding: 20px; border-radius: 10px;
+            margin-bottom: 20px; box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .search-box input, .search-box select {
+            padding: 10px; margin-right: 12px; margin-bottom: 8px;
+            border: 1px solid #ccc; border-radius: 5px; min-width: 140px;
+        }
+        .search-box button {
+            padding: 10px 20px; border: none; border-radius: 5px;
+            background-color: #3498db; color: white; cursor: pointer;
+        }
+        .search-box button:hover { background-color: #3770d2; }
+        .statistics { display: flex; gap: 20px; margin-bottom: 20px; }
+        .card {
+            flex: 1; background-color: white; padding: 20px; border-radius: 10px;
+            text-align: center; box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .card h3 { color: gray; margin-bottom: 10px; }
+        .card p { font-size: 28px; color: #3498db; font-weight: bold; }
+        .table-box {
+            background-color: white; padding: 20px; border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td {
+            padding: 12px 8px; border-bottom: 1px solid #ddd; text-align: center; vertical-align: middle;
+        }
+        table th { background-color: #f1f2f6; color: #2c3e50; }
+        .show { color: green; font-weight: bold; }
+        .hide { color: red; font-weight: bold; }
+        .action-btn {
+            padding: 6px 10px; border: none; border-radius: 5px;
+            color: white; cursor: pointer; margin: 2px; font-size: 13px;
+        }
+        .reply-btn { background-color: #3498db; }
+        .hide-btn { background-color: #e67e22; }
+        .show-btn { background-color: #27ae60; }
+        .delete-btn { background-color: #e74c3c; }
+        .reply-panel {
+            display: none; margin-top: 10px; text-align: left; padding: 10px;
+            background: #f8f9fa; border-radius: 6px;
+        }
+        .reply-panel.open { display: block; }
+        .reply-panel textarea {
+            width: 100%; min-height: 70px; padding: 8px; border: 1px solid #ddd;
+            border-radius: 4px; resize: vertical; margin-bottom: 8px;
+        }
+        .reply-panel .btn-submit-reply {
+            padding: 6px 16px; background: #3498db; color: white;
+            border: none; border-radius: 4px; cursor: pointer;
+        }
+        .ops-cell { min-width: 200px; }
+        .content-cell { max-width: 180px; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>后台管理</h2>
+    <ul>
+        <li><a href="/admin/dashboard">首页</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+        <li><a href="/admin/products">商品管理</a></li>
+        <li><a href="/admin/orders">订单管理</a></li>
+        <li><a href="/admin/reviews">评价管理</a></li>
+    </ul>
+</div>
+
+<div class="main">
+    <div class="header">
+        <h1>评价管理</h1>
+        <p>管理员可查看用户评价并进行回复与管理</p>
+    </div>
+
+    <div th:if="${message}" class="msg" th:text="${message}"></div>
+
+    <form class="search-box" method="get" action="/admin/reviews">
+        <input type="text" name="userId" placeholder="用户ID"
+               th:value="${filterUserId}">
+        <input type="text" name="orderId" placeholder="订单ID"
+               th:value="${filterOrderId}">
+        <input type="text" name="productId" placeholder="商品ID"
+               th:value="${filterProductId}">
+        <select name="rating">
+            <option value="" th:selected="${filterRating == null or filterRating == ''}">全部评分</option>
+            <option value="5" th:selected="${filterRating == '5'}">5星</option>
+            <option value="4" th:selected="${filterRating == '4'}">4星</option>
+            <option value="3" th:selected="${filterRating == '3'}">3星</option>
+            <option value="2" th:selected="${filterRating == '2'}">2星</option>
+            <option value="1" th:selected="${filterRating == '1'}">1星</option>
+        </select>
+        <select name="status">
+            <option value="" th:selected="${filterStatus == null or filterStatus == ''}">全部状态</option>
+            <option value="VISIBLE" th:selected="${filterStatus == 'VISIBLE'}">显示中</option>
+            <option value="HIDDEN" th:selected="${filterStatus == 'HIDDEN'}">已隐藏</option>
+        </select>
+        <button type="submit">搜索</button>
+        <a href="/admin/reviews" style="margin-left:8px;color:#666;text-decoration:none;">重置</a>
+    </form>
+
+    <div class="statistics">
+        <div class="card">
+            <h3>评价总数</h3>
+            <p th:text="${reviewTotal}">0</p>
+        </div>
+        <div class="card">
+            <h3>好评数量(4-5星)</h3>
+            <p th:text="${goodReviewCount}">0</p>
+        </div>
+        <div class="card">
+            <h3>待回复评价</h3>
+            <p th:text="${pendingReplyCount}">0</p>
+        </div>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <thead>
+            <tr>
+                <th>评价ID</th>
+                <th>用户ID</th>
+                <th>订单ID</th>
+                <th>商品ID</th>
+                <th>评分</th>
+                <th>评价内容</th>
+                <th>评价图片</th>
+                <th>管理员回复</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(reviewList)}">
+                <td colspan="11" style="text-align:center;color:#999;">暂无评价数据</td>
+            </tr>
+            <tr th:each="r : ${reviewList}">
+                <td th:text="${r.id}"></td>
+                <td th:text="${r.userId}"></td>
+                <td th:text="${r.orderId}"></td>
+                <td th:text="${r.productId}"></td>
+                <td th:text="${r.rating != null ? r.rating + '星' : '-'}"></td>
+                <td class="content-cell"
+                    th:text="${r.content != null ? (#strings.length(r.content) > 40 ? #strings.substring(r.content,0,40) + '...' : r.content) : '-'}"></td>
+                <td>
+                    <span th:if="${r.images == null or r.images == ''}">-</span>
+                    <span th:if="${r.images != null and r.images != ''}" th:text="${r.images}"></span>
+                </td>
+                <td th:text="${r.reply != null and r.reply != '' ? r.reply : '待回复'}"></td>
+                <td>
+                    <span th:if="${r.status == 'VISIBLE'}" class="show">显示中</span>
+                    <span th:if="${r.status == 'HIDDEN'}" class="hide">已隐藏</span>
+                    <span th:if="${r.status != 'VISIBLE' and r.status != 'HIDDEN'}" th:text="${r.status}"></span>
+                </td>
+                <td th:text="${r.createdAt != null ? #temporals.format(r.createdAt,'yyyy-MM-dd HH:mm') : '-'}"></td>
+                <td class="ops-cell">
+                    <button type="button" class="action-btn reply-btn"
+                            th:attr="data-target='reply-panel-' + ${r.id}"
+                            onclick="toggleReplyPanel(this)">回复</button>
+
+                    <form th:action="@{/admin/reviews/toggle-visibility}" method="post" style="display:inline;">
+                        <input type="hidden" name="id" th:value="${r.id}">
+                        <input type="hidden" name="userId" th:value="${filterUserId}">
+                        <input type="hidden" name="orderId" th:value="${filterOrderId}">
+                        <input type="hidden" name="productId" th:value="${filterProductId}">
+                        <input type="hidden" name="rating" th:value="${filterRating}">
+                        <input type="hidden" name="status" th:value="${filterStatus}">
+                        <button type="submit" class="action-btn hide-btn"
+                                th:if="${r.status == 'VISIBLE'}"
+                                onclick="return confirm('确定隐藏该评价吗？');">隐藏</button>
+                        <button type="submit" class="action-btn show-btn"
+                                th:if="${r.status == 'HIDDEN'}"
+                                onclick="return confirm('确定显示该评价吗？');">显示</button>
+                    </form>
+
+                    <form th:action="@{/admin/reviews/delete}" method="post" style="display:inline;">
+                        <input type="hidden" name="id" th:value="${r.id}">
+                        <input type="hidden" name="userId" th:value="${filterUserId}">
+                        <input type="hidden" name="orderId" th:value="${filterOrderId}">
+                        <input type="hidden" name="productId" th:value="${filterProductId}">
+                        <input type="hidden" name="rating" th:value="${filterRating}">
+                        <input type="hidden" name="status" th:value="${filterStatus}">
+                        <button type="submit" class="action-btn delete-btn"
+                                onclick="return confirm('确定永久删除该评价吗？此操作不可恢复。');">删除</button>
+                    </form>
+
+                    <div class="reply-panel" th:id="'reply-panel-' + ${r.id}">
+                        <form th:action="@{/admin/reviews/reply}" method="post">
+                            <input type="hidden" name="id" th:value="${r.id}">
+                            <input type="hidden" name="userId" th:value="${filterUserId}">
+                            <input type="hidden" name="orderId" th:value="${filterOrderId}">
+                            <input type="hidden" name="productId" th:value="${filterProductId}">
+                            <input type="hidden" name="rating" th:value="${filterRating}">
+                            <input type="hidden" name="status" th:value="${filterStatus}">
+                            <textarea name="reply" placeholder="请输入管理员回复…" maxlength="1000"
+                                      th:text="${r.reply}"></textarea>
+                            <button type="submit" class="btn-submit-reply">提交回复</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleReplyPanel(btn) {
+        var id = btn.getAttribute('data-target');
+        var panel = document.getElementById(id);
+        if (!panel) return;
+        var isOpen = panel.classList.contains('open');
+        document.querySelectorAll('.reply-panel.open').forEach(function(p) {
+            p.classList.remove('open');
+        });
+        if (!isOpen) {
+            panel.classList.add('open');
+            var ta = panel.querySelector('textarea');
+            if (ta) ta.focus();
+        }
+    }
+</script>
+</body>
+</html>
