@@ -1,0 +1,14 @@
+{
+  "name": "ec-system (Spring Boot + MySQL)",
+  "user": "ubuntu",
+  "snapshot": "snapshot-20260922-f4c71598-8a82-430f-a531-3a6b17102a58",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "ec-app",
+      "command": "cd /workspace && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 java -jar target/system-1.0.0.jar"
+    }
+  ],
+  "ports": [8080]
+}
